@@ -49,8 +49,8 @@ class BotInfo:
         return None
 
     def saveKoreanbotRateLimit(self,headers):
-        self.korean_bot_rate_limit = headers['X-RateLimit-Remaining']
-        self.korean_bot_rate_reset = headers['X-RateLimit-Reset']
+        self.korean_bot_rate_limit = int(headers['X-RateLimit-Remaining'])
+        self.korean_bot_rate_reset = int(headers['X-RateLimit-Reset'])
         print("LIMIT: %s in %s(s)" % (self.korean_bot_rate_limit, self.korean_bot_rate_reset))
 
     def checkKoreanbotRateLimit(self):
