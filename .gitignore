@@ -130,3 +130,6 @@ dmypy.json
 
 # environment
 token.txt
+
+# sql file
+data
