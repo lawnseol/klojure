@@ -1,0 +1,12 @@
+# top.gg sdk
+topggpy
+
+# korean bot sdk
+koreanbots
+
+# library
+requests
+sqlite3
+
+# discord
+disnake
