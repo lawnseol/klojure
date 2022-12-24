@@ -24,7 +24,9 @@ class Database:
         for no in range(len(info['owners'])):
             owners.append(info['owners'][no]['username'])
 
-        self.curs.execute("INSERT INTO BOTS (ID,NAME,VOTES,CATEGORIES,BOT_TYPE,TAG,AVATAR,OWNERS,FLAGS,LIB,PREFIX,SERVERS,SHARDS,INTRO,DESC,WEB,GIT,URL,DISCORD,VANITY,BG,BANNER,CREATED_AT) VALUES ('%s', '%s', %s, '%s','%s', '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')" % (info['id'],info['name'],info['votes'],'_'.join(info['category']),bot_type,info['tag'],info['avatar'],'_'.join(owners),info['flags'],info['lib'],info['prefix'],info['servers'],info['shards'],info['intro'],info['desc'],info['web'],info['git'],info['url'],info['discord'],info['vanity'],info['bg'],info['banner'],created_at))
+        print(info)
+
+        self.curs.execute("INSERT INTO BOTS (ID,NAME,VOTES,CATEGORIES,BOT_TYPE,TAG,AVATAR,OWNERS,FLAGS,LIB,PREFIX,SERVERS,SHARDS,INTRO,DESC,WEB,GIT,URL,DISCORD,VANITY,BG,BANNER,CREATED_AT) VALUES ('%s', '%s', %s, '%s','%s', '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')" % (info['id'],info['name'],info['votes'],'_'.join(info['category']),bot_type,info['tag'],info['avatar'],'_'.join(owners),info['flags'],info['lib'],info['prefix'],info['servers'],info['shards'],info['intro'],'',info['web'],info['git'],info['url'],info['discord'],info['vanity'],info['bg'],info['banner'],created_at))
         self.con.commit()
 
     def selectBotList(self,category_name,bot_type=""):
