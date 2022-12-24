@@ -12,3 +12,7 @@ if __name__ == "__main__":
             database.insertKoreanBotInfo(rank_list[no])
     bot_list = database.selectBotList("뮤직")
     print(bot_list)
+
+    multi_list = database.selectBotListByMultiCategory(["뮤직","유틸리티"])
+    print(multi_list)
+    database.close()
