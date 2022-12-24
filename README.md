@@ -1,1 +1,3 @@
-# discord-bot-allimi
+# klojure
+
+한국 디스코드 리스트 해커톤 출품작
