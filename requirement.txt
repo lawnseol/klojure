@@ -6,7 +6,7 @@ koreanbots
 
 # library
 requests
-sqlite3
+pysqlite-binary
 
 # discord
 disnake
