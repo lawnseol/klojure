@@ -133,3 +133,13 @@ token.txt
 
 # sql file
 data
+
+# log for hosting
+nohup.out
+nohup
+logs/
+log
+
+# start file
+start.sh
+start.bat
