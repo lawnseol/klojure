@@ -1,7 +1,8 @@
 import disnake
+from disnake import ActionRow, ApplicationCommandInteraction, ButtonStyle, Forbidden
 from disnake.ui import button, Button
-from disnake import ApplicationCommandInteraction, ButtonStyle
 from disnake.ext.commands import InteractionBot
+from disnake.ext import commands
 from utility.database import Database
 
 bot = InteractionBot(test_guilds=[1047887307853795369])
@@ -25,7 +26,6 @@ def botlist_once(categories2: list[str]):
 
 class DbWrapperBot:
     def __init__(self, botid: int):
-        #ID,NAME,VOTES,CATEGORIES,BOT_TYPE,TAG,AVATAR,OWNERS,FLAGS,LIB,PREFIX,SERVERS,SHARDS,INTRO,DESC,WEB,GIT,URL,DISCORD,VANITY,BG,BANNER,CREATED_AT
         db = Database('data/info.sql3')
         inf = db.selectBotInfo(botid)
         db.close()
@@ -52,26 +52,33 @@ class DbWrapperBot:
             self.exist = False
 
 class disnake_buttons(disnake.ui.View):
-    def __init__(self, values: list):
+    def __init__(self, values: list, inter: ApplicationCommandInteraction):
         super().__init__(timeout=None)
         self.n = 0
         self.values = values
+        self.interaction = inter
     
-    @button(label="<-", style=ButtonStyle.grey, custom_id="left")
+    @button(label="<-", style=ButtonStyle.primary)
     async def left_button(self, button: Button, inter: disnake.MessageInteraction):
-        if self.n <= 0:
-            await inter.response.send_message("no more page", ephemeral=True)
+        if inter.author == self.interaction.author:
+            if self.n <= 0:
+                await inter.response.send_message("더 이상 페이지가 없습니다.", ephemeral=True)
+            else:
+                self.n -= 1
+                await inter.response.edit_message("", embed=self.values[self.n])
         else:
-            self.n -= 1
-            await inter.response.edit_message("", embed=self.values[self.n])
+            await inter.response.send_message("당신은 명령어를 사용한 사람이 아닙니다.", ephemeral=True)
     
-    @button(label="->", style=ButtonStyle.grey, custom_id="right")
+    @button(label="->", style=ButtonStyle.primary)
     async def right_button(self, button: Button, inter: disnake.MessageInteraction):
-        if self.n >= len(self.values)-1:
-            await inter.response.send_message("no more page", ephemeral=True)
+        if inter.author == self.interaction.author:
+            if self.n >= len(self.values)-1:
+                await inter.response.send_message("더 이상 페이지가 없습니다.", ephemeral=True)
+            else:
+                self.n += 1
+                await inter.response.edit_message("", embed=self.values[self.n])
         else:
-            self.n += 1
-            await inter.response.edit_message("", embed=self.values[self.n])
+            await inter.response.send_message("당신은 명령어를 사용한 사람이 아닙니다.", ephemeral=True)
 
 class disnake_buttons2(disnake.ui.View):
     def __init__(self, bot: DbWrapperBot):
@@ -81,35 +88,45 @@ class disnake_buttons2(disnake.ui.View):
     
     @button(label="invite", style=ButtonStyle.secondary)
     async def invite_button(self, button: Button, inter: disnake.MessageInteraction):
-        await inter.send(f"Invite url: {self.bot.durl}", ephemeral=True)
+        await inter.send(f"초대 링크: {self.bot.durl}", ephemeral=True)
     
     @button(label="info", style=ButtonStyle.primary)
     async def info_button(self, button: Button, inter: disnake.MessageInteraction):
-        await inter.send(f"Url: https://koreanbots.dev/bots/{self.bot.botid}", ephemeral=True)
+        await inter.send(f"봇의 정보: https://koreanbots.dev/bots/{self.bot.botid}", ephemeral=True)
     
     @button(label="kick", style=ButtonStyle.danger)
     async def kick_button(self, button: Button, inter: disnake.MessageInteraction):
-        botobj = await inter.guild.get_member(self.bot.botid)
+        botobj = inter.guild.get_member(self.bot.botid)
         if botobj is not None:
-            await inter.guild.kick(botobj)
-            await inter.send("kicked", ephemeral=True)
+            try:
+                await inter.guild.kick(botobj)
+            except Forbidden:
+                await inter.send("봇이 권한을 가지고 있는 것 같지 않습니다.", ephemeral=True)
+            else:
+                await inter.send("킥에 성공하였습니다.", ephemeral=True)
+        elif inter.author.guild_permissions.kick_members is False:
+            await inter.send("당신은 킥할 권한이 없습니다.", ephemeral=True)
         else:
-            await inter.send("that bot isn't invited", ephemeral=True)
+            await inter.send("봇이 이 서버에 없습니다.", ephemeral=True)
 
 class disnake_selectmenu(disnake.ui.StringSelect):
-    def __init__(self):
+    def __init__(self, inter: ApplicationCommandInteraction):
+        self.interaction = inter
         options = []
         for i in categories:
             options.append(disnake.SelectOption(label=i))
 
         super().__init__(
-            placeholder="Choose category",
+            placeholder="카테고리를 선택하세요.",
             min_values=1,
             max_values=len(options),
             options=options,
         )
 
     async def callback(self, inter: disnake.MessageInteraction):
+        if inter.author != self.interaction.author:
+            await inter.send("당신은 명령어를 사용한 사람이 아닙니다.", ephemeral=True)
+            return
         labels = self._selected_values
         result = botlist_once(labels)
         values = []
@@ -127,49 +144,93 @@ class disnake_selectmenu(disnake.ui.StringSelect):
             del n
             embeds = []
             for n, i in enumerate(values):
-                embed = disnake.Embed(title=f"page: {n+1}/{len(values)}")
-                embed.add_field(name="name", value="\n".join(i["name"]))
-                embed.add_field(name="vote", value="\n".join(i["vote"]))
-                embed.add_field(name="id", value="\n".join(i["id"]))
+                embed = disnake.Embed(title=f"페이지: {n+1}/{len(values)}")
+                embed.add_field(name="이름", value="\n".join(i["name"]))
+                embed.add_field(name="투표 수", value="\n".join(i["vote"]))
+                embed.add_field(name="봇 아이디", value="\n".join(i["id"]))
                 embeds.append(embed)
-            await inter.message.edit("", embed=embeds[0], view=disnake_buttons(embeds))
+            await inter.message.edit("", embed=embeds[0], view=disnake_buttons(embeds, self.interaction))
         else:
             await inter.message.edit("그런 카테고리의 봇은 존재하지 않습니다.", view=None)
 
-class disnake_view(disnake.ui.View):
+class disnake_modal(disnake.ui.Modal):
     def __init__(self):
+        components = [disnake.ui.TextInput(label="search", placeholder="검색할 이름을 입력해주세요.", custom_id="search", max_length=30)]
+        super().__init__(title="검색", custom_id="search_modal", components=components)
+    
+    async def callback(self, inter: disnake.ModalInteraction):
+        _result = botlist_once([])
+        result = []
+        print(_result)
+        for i in _result:
+            print(list(str(i[1]).replace(' ', '')))
+            if (i[1]).replace(' ', '').lower().__contains__(inter.text_values["search"].replace(' ', '').lower()):
+                result.append(i)
+        values = []
+        valuesa = {"name": [], "vote": [], "id": []}
+        if len(result) > 0:
+            for n, i in enumerate(result):
+                if n != 0 and n % 10 == 0:
+                    values.append(valuesa)
+                    valuesa = {"name": [], "vote": [], "id": []}
+                valuesa["name"].append(i[1])
+                valuesa["vote"].append(str(i[2]))
+                valuesa["id"].append(i[0])
+            values.append(valuesa)
+            del valuesa
+            del n
+            embeds = []
+            for n, i in enumerate(values):
+                embed = disnake.Embed(title=f"페이지: {n+1}/{len(values)}")
+                embed.add_field(name="이름", value="\n".join(i["name"]))
+                embed.add_field(name="투표", value="\n".join(i["vote"]))
+                embed.add_field(name="봇 아이디", value="\n".join(i["id"]))
+                embeds.append(embed)
+            await inter.send("", embed=embeds[0], view=disnake_buttons(embeds, inter))
+        else:
+            await inter.send("검색 결과가 없습니다.")
+    
+    async def on_error(self, error: Exception, inter: disnake.ModalInteraction) -> None:
+        await inter.response.send_message("Oops, something went wrong.", ephemeral=True)
+
+class disnake_view(disnake.ui.View):
+    def __init__(self, inter: ApplicationCommandInteraction):
         super().__init__()
 
-        self.add_item(disnake_selectmenu())
+        self.add_item(disnake_selectmenu(inter))
 
-@bot.slash_command(name="list", description="bot list")
-async def disnake_list(inter: ApplicationCommandInteraction):
-    view = disnake_view()
-    await inter.send("select category", view=view)
+@bot.slash_command(name="search", description="봇을 검색 할 수 있습니다.")
+async def disnake_list(inter: ApplicationCommandInteraction, by = commands.Param(choices = ["category", "name"], description="봇을 이름이나 카테고리로 검색하세요.")):
+    if by == "category":
+        view = disnake_view(inter)
+        await inter.send(view=view)
+    else:
+        view = disnake_modal()
+        await inter.response.send_modal(view)
 
-@bot.slash_command(name="info", description="bot info")
-async def disnake_info(inter: ApplicationCommandInteraction, botid: str):
+@bot.slash_command(name="info", description="봇의 세부적인 정보를 알 수 있습니다.")
+async def disnake_info(inter: ApplicationCommandInteraction, botid: str = commands.Param(description="봇의 아이디입니다. 무조건 정수여야 합니다.")):
     try:
         botid = int(botid)
     except ValueError:
-        await inter.send("no int")
+        await inter.send("아이디가 정수가 아닌 것 같습니다.")
     else:
         bot = DbWrapperBot(botid)
         if bot.exist is False:
-            await inter.send("no bot that has id")
+            await inter.send("이 아이디를 가진 봇이 없는 것 같습니다.")
         else:
-            await inter.send("fetching some information")
+            await inter.send("정보를 가져오는 중..")
             embed = disnake.Embed(title=bot.name, description=bot.oneline)
-            embed.add_field(name="owner", value=bot.owners)
-            embed.add_field(name="prefix", value=bot.prefix)
-            embed.add_field(name="web", value=bot.web)
-            embed.add_field(name="categories", value=', '.join(bot.categories))
-            embed.add_field(name="votes", value=bot.votes) 
-            embed.add_field(name="shards", value=bot.shards)
-            embed.add_field(name="servers", value=bot.servers)
-            embed.add_field(name="created at", value=bot.created_at)
+            embed.add_field(name="제작자", value=bot.owners)
+            embed.add_field(name="접두사", value=bot.prefix)
+            embed.add_field(name="웹페이지", value=bot.web)
+            embed.add_field(name="카테고리", value=', '.join(bot.categories))
+            embed.add_field(name="투표 수", value=bot.votes) 
+            embed.add_field(name="샤드 수", value=bot.shards)
+            embed.add_field(name="서버 수", value=bot.servers)
+            embed.add_field(name="만들어진 날짜", value=bot.created_at)
             embed.add_field(name="git url", value=bot.git)
-            embed.add_field(name="library", value=bot.lib)
-            await inter.send(embed=embed, view=disnake_buttons2(bot))
+            embed.add_field(name="라이브러리", value=bot.lib)
+            await inter.edit_original_message("", embed=embed, view=disnake_buttons2(bot))
 
 bot.run(token)
