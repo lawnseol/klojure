@@ -37,7 +37,7 @@ class DbWrapperBot:
             self.name = inf[1]
             self.votes = int(inf[2])
             self.categories = inf[3]
-            self.owners = inf[7]
+            self.owners = inf[7].split("_")
             self.lib = inf[9]
             self.prefix = inf[10]
             self.servers = int(inf[11])
@@ -183,7 +183,7 @@ class disnake_modal(disnake.ui.Modal):
             for n, i in enumerate(values):
                 embed = disnake.Embed(title=f"페이지: {n+1}/{len(values)}")
                 embed.add_field(name="이름", value="\n".join(i["name"]))
-                embed.add_field(name="투표", value="\n".join(i["vote"]))
+                embed.add_field(name="투표 수", value="\n".join(i["vote"]))
                 embed.add_field(name="봇 아이디", value="\n".join(i["id"]))
                 embeds.append(embed)
             await inter.send("", embed=embeds[0], view=disnake_buttons(embeds, inter))
@@ -221,7 +221,7 @@ async def disnake_info(inter: ApplicationCommandInteraction, botid: str = comman
         else:
             await inter.send("정보를 가져오는 중..")
             embed = disnake.Embed(title=bot.name, description=bot.oneline)
-            embed.add_field(name="제작자", value=bot.owners)
+            embed.add_field(name="제작자", value=', '.join(bot.owners))
             embed.add_field(name="접두사", value=bot.prefix)
             embed.add_field(name="웹페이지", value=bot.web)
             embed.add_field(name="카테고리", value=', '.join(bot.categories))
