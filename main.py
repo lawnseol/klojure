@@ -1,5 +1,5 @@
 import disnake
-from disnake import ActionRow, ApplicationCommandInteraction, ButtonStyle, Forbidden
+from disnake import ApplicationCommandInteraction, ButtonStyle, Forbidden
 from disnake.ui import button, Button
 from disnake.ext.commands import InteractionBot
 from disnake.ext import commands
@@ -10,8 +10,9 @@ categories = ["관리", "뮤직", "전적", "게임", "도박", "로깅", "빗�
 with open('token.txt', 'r') as f:
     token = f.read()
 
+db = Database("data/info.sql3")
+
 def botlist_once(categories2: list[str]):
-    db = Database("data/info.sql3")
     inf = list(map(list, db.selectBotList(categories[0])))
     for i in inf:
         i[3] = i[3].split("_")
@@ -21,14 +22,11 @@ def botlist_once(categories2: list[str]):
             if i2[3].__contains__(i):
                 somelist.append(i2)
         inf = somelist
-    db.close()
     return inf
 
 class DbWrapperBot:
     def __init__(self, botid: int):
-        db = Database('data/info.sql3')
         inf = db.selectBotInfo(botid)
-        db.close()
         inf = list(inf[0])
         inf[3] = inf[3].split("_")
         if inf is not None:
