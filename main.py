@@ -27,7 +27,7 @@ def botlist_once(categories2: list[str]):
 class DbWrapperBot:
     def __init__(self, botid: int):
         inf = db.selectBotInfo(botid)
-        if inf is not None:
+        if inf is not None and len(inf) != 0:
             inf = list(inf[0])
             inf[3] = inf[3].split("_")
             self.exist = True
