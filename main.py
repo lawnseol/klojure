@@ -39,7 +39,7 @@ class DbWrapperBot:
             self.lib = inf[9]
             self.prefix = inf[10]
             self.servers = int(inf[11])
-            if self.shards is not None:
+            if inf[12] is not None:
                 self.shards = int(inf[12])
             else:
                 self.shards = 1
