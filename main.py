@@ -211,11 +211,11 @@ async def disnake_info(inter: ApplicationCommandInteraction, botid: str = comman
     try:
         botid = int(botid)
     except ValueError:
-        await inter.send("아이디가 정수가 아닌 것 같습니다.")
+        await inter.send("아이디가 정수가 아닌 것 같습니다.", ephemeral=True)
     else:
         bot = DbWrapperBot(botid)
         if bot.exist is False:
-            await inter.send("이 아이디를 가진 봇이 없는 것 같습니다.")
+            await inter.send("이 아이디를 가진 봇이 없는 것 같습니다.", ephemeral=True)
         else:
             await inter.send("정보를 가져오는 중..")
             embed = disnake.Embed(title=bot.name, description=bot.oneline)
