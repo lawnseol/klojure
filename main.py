@@ -66,7 +66,7 @@ class disnake_buttons(disnake.ui.View):
                 await inter.response.send_message("더 이상 페이지가 없습니다.", ephemeral=True)
             else:
                 self.n -= 1
-                await inter.response.edit_message("", embed=self.values[self.n])
+                await inter.response.edit_message("", view=[self.values[self.n], self])
         else:
             await inter.response.send_message("당신은 명령어를 사용한 사람이 아닙니다.", ephemeral=True)
     
@@ -77,7 +77,7 @@ class disnake_buttons(disnake.ui.View):
                 await inter.response.send_message("더 이상 페이지가 없습니다.", ephemeral=True)
             else:
                 self.n += 1
-                await inter.response.edit_message("", embed=self.values[self.n])
+                await inter.response.edit_message("", view=[self.values[self.n], self])
         else:
             await inter.response.send_message("당신은 명령어를 사용한 사람이 아닙니다.", ephemeral=True)
 
@@ -126,6 +126,7 @@ class disnake_selectmenu(disnake.ui.StringSelect):
 
     async def callback(self, inter: disnake.MessageInteraction):
         if inter.author != self.interaction.author:
+            self._selected_values = None
             await inter.send("당신은 명령어를 사용한 사람이 아닙니다.", ephemeral=True)
             return
         labels = self._selected_values
@@ -134,7 +135,7 @@ class disnake_selectmenu(disnake.ui.StringSelect):
         valuesa = {"name": [], "vote": [], "id": []}
         if len(result) > 0:
             for n, i in enumerate(result):
-                if n != 0 and n % 10 == 0:
+                if n != 0 and n % 20 == 0:
                     values.append(valuesa)
                     valuesa = {"name": [], "vote": [], "id": []}
                 valuesa["name"].append(i[1])
@@ -143,16 +144,28 @@ class disnake_selectmenu(disnake.ui.StringSelect):
             values.append(valuesa)
             del valuesa
             del n
-            embeds = []
+            sselects = []
             for n, i in enumerate(values):
-                embed = disnake.Embed(title=f"페이지: {n+1}/{len(values)}")
-                embed.add_field(name="이름", value="\n".join(i["name"]))
-                embed.add_field(name="투표 수", value="\n".join(i["vote"]))
-                embed.add_field(name="봇 아이디", value="\n".join(i["id"]))
-                embeds.append(embed)
-            await inter.message.edit("", embed=embeds[0], view=disnake_buttons(embeds, self.interaction))
+                sselect = disnake_selectmenu2(max_values=len(i))
+                for i2 in values:
+                    sselect.append_option(SelectOption(label=i2["name"], value=f"투표 수: {i2['vote']}, 봇 아이디: {i2['id']}", custom_id=i2['id']))
+                sselect.append(sselect)
+            await inter.message.edit("", view=[sselects[0], disnake_buttons(embeds, self.interaction)])
         else:
             await inter.message.edit("그런 카테고리의 봇은 존재하지 않습니다.", view=None)
+
+class disnake_selectmenu2(disnake.ui.StringSelect):
+    def __init__(self, options: list):
+        super().__init__(
+            max_values=len(options)
+        )
+
+    async def callback(self, inter: disnake.MessageInteraction):
+        if inter.author != self.interaction.author:
+            await inter.send("당신은 명령어를 사용한 사람이 아닙니다.", ephemeral=True)
+            self._selected_values = None
+            return
+        print(DbWrapperBot(self._selected_values))
 
 class disnake_modal(disnake.ui.Modal):
     def __init__(self):
@@ -162,9 +175,7 @@ class disnake_modal(disnake.ui.Modal):
     async def callback(self, inter: disnake.ModalInteraction):
         _result = botlist_once([])
         result = []
-        print(_result)
         for i in _result:
-            print(list(str(i[1]).replace(' ', '')))
             if (i[1]).replace(' ', '').lower().__contains__(inter.text_values["search"].replace(' ', '').lower()):
                 result.append(i)
         values = []
