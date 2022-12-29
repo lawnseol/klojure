@@ -10,6 +10,8 @@ bot = InteractionBot(test_guilds=[1047887307853795369])
 categories = ["관리", "뮤직", "전적", "게임", "도박", "로깅", "빗금 명령어", "웹 대시보드", "밈", "레벨링", "유틸리티", "대화", "NSFW", "검색", "학교", "코로나19", "번역", "오버워치", "리그오브레전드", "배틀그라운드", "마인크래프트"]
 with open('token.txt', 'r') as f:
     token = f.read()
+ns = {}
+pairs = {}
 
 db = Database("data/info.sql3")
 
@@ -62,12 +64,14 @@ class disnake_button(disnake.ui.Button):
         
         self.pos = pos
         self.n = 0
+        ns[id(self)] = self.n
         self.values = values
         self.interaction = inter
 
         super().__init__(label=_label, style=ButtonStyle.primary)
 
     async def callback(self, inter: disnake.MessageInteraction):
+        self.n = ns[pairs[id(self)]]
         if self.pos == "left":
             _nplus = -1
             _ncompare = 0
@@ -87,11 +91,13 @@ class disnake_button(disnake.ui.Button):
                 await inter.response.edit_message("", view=disnake_view([self.values[self.n], disnake_button(inter, self.values, "left"), disnake_button(inter, self.values, "right")]))
         else:
             await inter.response.send_message("당신은 명령어를 사용한 사람이 아닙니다.", ephemeral=True)
+    
+    def __del__(self):
+        del ns[id(self)]
 
 class disnake_buttons2(disnake.ui.View):
     def __init__(self, bot: DbWrapperBot):
         super().__init__(timeout=60)
-        self.n = 0
         self.bot = bot
     
     @button(label="invite", style=ButtonStyle.secondary)
@@ -159,7 +165,11 @@ class disnake_selectmenu(disnake.ui.StringSelect):
                 smenus.append(disnake_selectmenu2(title=f"페이지: {ceil((n+1) / 25)}/{ceil(len(values) / 25)}", values=_values, inter=self.interaction))
             del _values
             del n    
-            await inter.message.edit("", view=disnake_view([smenus[0], disnake_button(self.interaction, smenus, "left"), disnake_button(self.interaction, smenus, "right")]))
+            left = disnake_button(self.interaction, smenus, "left")
+            right = disnake_button(self.interaction, smenus, "right")
+            pairs[id(left)] = id(right)
+            pairs[id(right)] = id(left)
+            await inter.message.edit("", view=disnake_view([smenus[0], left, right]))
         else:
             await inter.message.edit("그런 카테고리의 봇은 존재하지 않습니다.", view=None)
 
