@@ -88,12 +88,19 @@ class disnake_button(disnake.ui.Button):
                 await inter.response.send_message("더 이상 페이지가 없습니다.", ephemeral=True)
             else:
                 self.n += _nplus
-                await inter.response.edit_message("", view=disnake_view([self.values[self.n], disnake_button(inter, self.values, "left"), disnake_button(inter, self.values, "right")]))
+                left = disnake_button(inter, self.values, "left")
+                right = disnake_button(inter, self.values, "right")
+                pairs[id(left)] = id(right)
+                pairs[id(right)] = id(left)
+                ns[id(left)] = self.n
+                ns[id(right)] = self.n
+                await inter.response.edit_message("", view=disnake_view([self.values[self.n], left, right]))
         else:
             await inter.response.send_message("당신은 명령어를 사용한 사람이 아닙니다.", ephemeral=True)
     
     def __del__(self):
         del ns[id(self)]
+        del pairs[id(self)]
 
 class disnake_buttons2(disnake.ui.View):
     def __init__(self, bot: DbWrapperBot):
