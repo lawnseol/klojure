@@ -1,12 +1,16 @@
 from utility.botinfo import BotInfo
 from utility.database import Database
 from sys import argv
+from os import mkdir
+from os.path import isdir
 
 if __name__ == "__main__":
     try:
         argv[1]
     except IndexError:
         argv.append(1)
+    if isdir('data') is False:
+        mkdir('data')
     botinfo = BotInfo("conf/botinfo.cnf")
     database = Database("data/info.sql3")
     rank_json = botinfo.getKoreanBotByHeartRankList(argv[1])
