@@ -76,7 +76,11 @@ class disnake_button(disnake.ui.Button):
             _ncompare = len(self.values)-1
         
         if inter.author == self.interaction.author:
-            if self.n <= _ncompare:
+            if self.pos == "left":
+                _cond = self.n <= _ncompare
+            else:
+                _cond = self.n > _ncompare
+            if _cond:
                 await inter.response.send_message("더 이상 페이지가 없습니다.", ephemeral=True)
             else:
                 self.n += _nplus
