@@ -77,7 +77,7 @@ class disnake_button(disnake.ui.Button):
             _ncompare = 0
         else:
             _nplus = 1
-            _ncompare = len(self.values)-1
+            _ncompare = len(self.values)-2
         
         if inter.author == self.interaction.author:
             if self.pos == "left":
