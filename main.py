@@ -94,7 +94,10 @@ class disnake_button(disnake.ui.Button):
                 pairs[id(right)] = id(left)
                 ns[id(left)] = self.n
                 ns[id(right)] = self.n
-                await inter.response.edit_message("", view=disnake_view([self.values[self.n], left, right]))
+                try:
+                    await inter.response.edit_message("", view=disnake_view([self.values[self.n], left, right]))
+                except IndexError:
+                    await inter.response.send_message("더 이상 페이지가 없습니다.", ephemeral=True)
         else:
             await inter.response.send_message("당신은 명령어를 사용한 사람이 아닙니다.", ephemeral=True)
     
