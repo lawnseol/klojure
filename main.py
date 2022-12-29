@@ -84,7 +84,7 @@ class disnake_button(disnake.ui.Button):
                 await inter.response.send_message("더 이상 페이지가 없습니다.", ephemeral=True)
             else:
                 self.n += _nplus
-                await inter.response.edit_message("", view=self.values[self.n])
+                await inter.response.edit_message("", view=disnake_view([self.values[self.n]]))
         else:
             await inter.response.send_message("당신은 명령어를 사용한 사람이 아닙니다.", ephemeral=True)
 
