@@ -51,7 +51,7 @@ class DbWrapperBot:
 
 class disnake_button(disnake.ui.Button):
     def __init__(self, inter: ApplicationCommandInteraction | disnake.ModalInteraction, values: list, pos: str):
-        label = "<-" if pos == "left" else "->"
+        _label = "<-" if pos == "left" else "->"
         
         self.pos = pos
         self.n = 0
@@ -199,7 +199,11 @@ class disnake_modal(disnake.ui.Modal):
                 smenus.append(disnake_selectmenu2(title=f"페이지: {ceil((n+1) / 25)}/{ceil(len(values) / 25)}", values=_values, inter=inter))
             del _values
             del n
-            await inter.send("", view=disnake_view([smenus[0], disnake_button(inter, smenus, "left"), disnake_button(inter, smenus, "right")]))
+            left = disnake_button(inter, smenus, "left")
+            right = disnake_button(inter, smenus, "right")
+            pairs[id(left)] = id(right)
+            pairs[id(right)] = id(left)
+            await inter.send("", view=disnake_view([smenus[0], left, right]))
         else:
             await inter.send("검색 결과가 없습니다.")
 
