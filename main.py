@@ -20,10 +20,7 @@ def botlist_once(categories2: list[str]):
     for i in inf:
         i[3] = i[3].split("_")
     for i in categories2:
-        somelist = []
-        for i2 in inf:
-            if i2[3].__contains__(i):
-                somelist.append(i2)
+        somelist = [i2 for i2 in inf if i2[3].__contains__(i)]
         inf = somelist
     return inf
 
@@ -42,10 +39,7 @@ class DbWrapperBot:
             self.lib = inf[9]
             self.prefix = inf[10]
             self.servers = int(inf[11])
-            if inf[12] is not None and inf[12] != "None":
-                self.shards = int(inf[12])
-            else:
-                self.shards = 1
+            self.shards = int(inf[12]) if inf[12] is not None and inf[12] != "None" else 1
             self.oneline = inf[13]
             self.web = inf[15]
             self.git = inf[16]
@@ -57,10 +51,7 @@ class DbWrapperBot:
 
 class disnake_button(disnake.ui.Button):
     def __init__(self, inter: ApplicationCommandInteraction | disnake.ModalInteraction, values: list, pos: str):
-        if pos == "left":
-            _label = "<-"
-        else:
-            _label = "->"
+        label = "<-" if pos == "left" else "->"
         
         self.pos = pos
         self.n = 0
@@ -72,18 +63,11 @@ class disnake_button(disnake.ui.Button):
 
     async def callback(self, inter: disnake.MessageInteraction):
         self.n = ns[pairs[id(self)]]
-        if self.pos == "left":
-            _nplus = -1
-            _ncompare = 0
-        else:
-            _nplus = 1
-            _ncompare = len(self.values)-2
-        
+        _nplus = -1 if self.pos == "left" else 1
+        _ncompare = 0 if self.pos == "left" else len(self.values)-1
+
         if inter.author == self.interaction.author:
-            if self.pos == "left":
-                _cond = self.n <= _ncompare
-            else:
-                _cond = self.n > _ncompare
+            _cond = self.n <= _ncompare if self.pos == "left" else self.n > _ncompare
             if _cond:
                 await inter.response.send_message("더 이상 페이지가 없습니다.", ephemeral=True)
             else:
@@ -136,10 +120,7 @@ class disnake_buttons2(disnake.ui.View):
 class disnake_selectmenu(disnake.ui.StringSelect):
     def __init__(self, inter: ApplicationCommandInteraction | disnake.ModalInteraction):
         self.interaction = inter
-        options = []
-        for i in categories:
-            options.append(disnake.SelectOption(label=i))
-
+        options = [disnake.SelectOption(label=i) for i in categories]
         super().__init__(
             placeholder="카테고리를 선택하세요.",
             min_values=1,
@@ -153,16 +134,10 @@ class disnake_selectmenu(disnake.ui.StringSelect):
             return
         labels = self._selected_values
         result = botlist_once(labels)
-        values = []
         if len(result) > 0:
+            values = []
             for n, i in enumerate(result):
-                valuesa = {"name": "", "vote": "", "id": "", "desc": ""}
-                valuesa["name"] = i[1]
-                valuesa["vote"] = str(i[2])
-                valuesa["id"] = i[0]
-                valuesa["desc"] = i[13]
-                values.append(valuesa)
-            del valuesa
+                values.append({"name": i[1], "vote": str(i[2]), "id": i[0], "desc": i[13]})
             del n
             smenus = []
             _values = []
@@ -174,7 +149,7 @@ class disnake_selectmenu(disnake.ui.StringSelect):
             if len(_values) != 0:
                 smenus.append(disnake_selectmenu2(title=f"페이지: {ceil((n+1) / 25)}/{ceil(len(values) / 25)}", values=_values, inter=self.interaction))
             del _values
-            del n    
+            del n
             left = disnake_button(self.interaction, smenus, "left")
             right = disnake_button(self.interaction, smenus, "right")
             pairs[id(left)] = id(right)
@@ -208,21 +183,10 @@ class disnake_modal(disnake.ui.Modal):
     
     async def callback(self, inter: disnake.ModalInteraction):
         _result = botlist_once([])
-        result = []
-        for i in _result:
-            if (i[1]).replace(' ', '').lower().__contains__(inter.text_values["search"].replace(' ', '').lower()):
-                result.append(i)
-        values = []
-        valuesa = {"name": [], "vote": [], "id": []}
-        if len(result) > 0:
+        if result := [i for i in _result if (i[1]).replace(' ', '').lower().__contains__(inter.text_values["search"].replace(' ', '').lower())]:
+            values = []
             for n, i in enumerate(result):
-                valuesa = {"name": "", "vote": "", "id": "", "desc": ""}
-                valuesa["name"] = i[1]
-                valuesa["vote"] = str(i[2])
-                valuesa["id"] = i[0]
-                valuesa["desc"] = i[13]
-                values.append(valuesa)
-            del valuesa
+                values.append({"name": i[1], "vote": str(i[2]), "id": i[0], "desc": i[13]})
             del n
             smenus = []
             _values = []
@@ -234,7 +198,7 @@ class disnake_modal(disnake.ui.Modal):
             if len(_values) != 0:
                 smenus.append(disnake_selectmenu2(title=f"페이지: {ceil((n+1) / 25)}/{ceil(len(values) / 25)}", values=_values, inter=inter))
             del _values
-            del n    
+            del n
             await inter.send("", view=disnake_view([smenus[0], disnake_button(inter, smenus, "left"), disnake_button(inter, smenus, "right")]))
         else:
             await inter.send("검색 결과가 없습니다.")
